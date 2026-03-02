@@ -21,7 +21,34 @@
     <!-- Fireworks Container -->
     <div id="fireworks-container"></div>
 
-    <main class="main-container">
+    <!-- Seasonal Particle Layer -->
+    <div id="seasonal-container" style="position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;"></div>
+
+    <!-- Password Gate -->
+    <div class="lock-screen" id="lockScreen">
+      <div class="lock-card">
+        <div class="lock-icon">🏠</div>
+        <h2 class="lock-title">Nhà mình</h2>
+        <p class="lock-subtitle">Nhập mật khẩu để vào nhà</p>
+        <div class="lock-input-wrap">
+          <input
+            type="password"
+            id="lockInput"
+            class="lock-input"
+            placeholder="Mật khẩu..."
+            maxlength="30"
+            onkeydown="if(event.key==='Enter') checkPassword()"
+          />
+          <button class="lock-eye" id="lockEye" onclick="toggleLockEye()" aria-label="Hiện/Ẩn">
+            👁️
+          </button>
+        </div>
+        <div class="lock-error" id="lockError"></div>
+        <button class="lock-btn" onclick="checkPassword()">Vào nhà 🏠</button>
+      </div>
+    </div>
+
+    <main class="main-container" id="mainContent" style="display:none">
       <h1>Gia đình số nhất mốt</h1>
 
       <!-- Ảnh gia đình lớn - Slideshow (to + căn giữa) -->
@@ -127,6 +154,28 @@
     </main>
 
 
+
+    <!-- Fireworks Toggle Button -->
+    <button class="fw-toggle" id="fwToggle" onclick="toggleFireworks()" title="Bật/tắt pháo hoa"></button>
+
+    <!-- Theme Picker -->
+    <div class="theme-picker-panel" id="themePickerPanel"></div>
+    <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleThemePicker()" title="Chọn theme mùa">🌸</button>
+
+    <!-- Custom Confirm Dialog -->
+    <div class="cconfirm-overlay" id="cconfirmOverlay">
+      <div class="cconfirm-card">
+        <div class="cconfirm-icon">🗑️</div>
+        <p class="cconfirm-msg" id="cconfirmMsg"></p>
+        <div class="cconfirm-actions">
+          <button class="cconfirm-btn cancel" id="cconfirmCancel">Huỷ</button>
+          <button class="cconfirm-btn ok" id="cconfirmOk">Xóa</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
 
     <!-- Daily Photo Modal -->
     <div class="daily-modal" id="dailyModal" onclick="closeDailyModal(event)">

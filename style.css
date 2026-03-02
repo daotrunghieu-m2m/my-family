@@ -15,6 +15,185 @@
   font-family: "Outfit", "Inter", sans-serif;
 }
 
+/* ===================== Lock Screen ===================== */
+.lock-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 50%, #7d0000 0%, #300000 100%);
+  padding: 1.5rem;
+  /* Mobile: khi bàn phím ảo mở thì không bị cắt */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@supports (height: 100dvh) {
+  .lock-screen { min-height: 100dvh; }
+}
+
+.lock-card {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 28px;
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  box-shadow: 0 8px 48px rgba(0,0,0,0.5), 0 0 60px rgba(255,215,0,0.07);
+  animation: lockFadeIn 0.5s ease;
+}
+
+@keyframes lockFadeIn {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.lock-icon {
+  font-size: 3rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 16px rgba(255,215,0,0.5));
+  animation: lockBounce 2s ease-in-out infinite;
+}
+
+@keyframes lockBounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+
+.lock-title {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 20px rgba(255,215,0,0.4);
+}
+
+.lock-subtitle {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.55);
+  text-align: center;
+}
+
+.lock-input-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.lock-input {
+  width: 100%;
+  padding: 0.75rem 3rem 0.75rem 1.1rem;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,215,0,0.25);
+  border-radius: 14px;
+  color: #fffbef;
+  font-size: 1rem;
+  font-family: "Outfit", "Inter", sans-serif;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  letter-spacing: 0.1em;
+}
+
+.lock-input:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(255,215,0,0.15);
+}
+
+.lock-input::placeholder { color: rgba(255,255,255,0.3); letter-spacing: 0; }
+
+.lock-eye {
+  position: absolute;
+  right: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  padding: 0;
+  line-height: 1;
+}
+.lock-eye:hover { opacity: 1; }
+
+.lock-error {
+  font-size: 0.82rem;
+  color: #ff6b6b;
+  min-height: 1.1em;
+  text-align: center;
+  transition: opacity 0.2s;
+}
+
+.lock-btn {
+  width: 100%;
+  padding: 0.8rem;
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  border: none;
+  border-radius: 14px;
+  color: #3a0000;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: "Outfit", "Inter", sans-serif;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 20px rgba(255,215,0,0.3);
+  margin-top: 0.3rem;
+}
+.lock-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 28px rgba(255,215,0,0.45);
+}
+.lock-btn:active { transform: translateY(0); }
+
+@keyframes lockShake {
+  0%,100% { transform: translateX(0); }
+  20%      { transform: translateX(-8px); }
+  40%      { transform: translateX(8px); }
+  60%      { transform: translateX(-6px); }
+  80%      { transform: translateX(6px); }
+}
+.lock-shake { animation: lockShake 0.4s ease; }
+
+/* ===================== Fireworks Toggle Button ===================== */
+.fw-toggle {
+  position: fixed;
+  bottom: 1.4rem;
+  right: 1.4rem;
+  z-index: 10001;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,215,0,0.35);
+  background: rgba(255,255,255,0.09);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.18s, box-shadow 0.18s, background 0.2s;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.35);
+  line-height: 1;
+}
+.fw-toggle:hover {
+  transform: scale(1.12);
+  box-shadow: 0 6px 24px rgba(255,215,0,0.3);
+}
+.fw-toggle.fw-off {
+  opacity: 0.45;
+  filter: grayscale(0.7);
+}
+.fw-toggle.fw-off:hover { opacity: 0.7; }
+
 body {
   background: var(--bg-color);
   color: var(--text-color);
@@ -527,6 +706,260 @@ h1 {
 }
 
 .cr-item:hover .cr-item-overlay { opacity: 1; }
+
+/* Nút xóa ảnh */
+.cr-delete-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.18s, background 0.18s, transform 0.15s;
+  z-index: 10;
+  line-height: 1;
+  padding: 0;
+  backdrop-filter: blur(4px);
+}
+.cr-item:hover .cr-delete-btn { opacity: 1; }
+.cr-delete-btn:hover {
+  background: rgba(220, 40, 40, 0.85);
+  transform: scale(1.15);
+}
+
+/* Mobile: luôn hiện mờ để dễ bấm */
+@media (hover: none) {
+  .cr-delete-btn { opacity: 0.55; }
+}
+
+/* ===================== Custom Confirm Dialog ===================== */
+.cconfirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.cconfirm-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+.cconfirm-card {
+  background: rgba(60,0,0,0.92);
+  border: 1px solid rgba(255,215,0,0.25);
+  border-radius: 22px;
+  padding: 2rem 1.6rem 1.4rem;
+  max-width: 300px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.6);
+  transform: scale(0.92);
+  transition: transform 0.2s;
+}
+.cconfirm-overlay.visible .cconfirm-card { transform: scale(1); }
+.cconfirm-icon { font-size: 2.2rem; line-height: 1; }
+.cconfirm-msg {
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.9);
+  text-align: center;
+  line-height: 1.5;
+}
+.cconfirm-actions {
+  display: flex;
+  gap: 0.7rem;
+  width: 100%;
+  margin-top: 0.3rem;
+}
+.cconfirm-btn {
+  flex: 1;
+  padding: 0.65rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: "Outfit","Inter",sans-serif;
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.15s;
+}
+.cconfirm-btn:active { transform: scale(0.96); }
+.cconfirm-btn.cancel {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.8);
+}
+.cconfirm-btn.ok {
+  background: linear-gradient(135deg,#e03030,#a30000);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(200,0,0,0.35);
+}
+
+/* ===================== Toast ===================== */
+.toast {
+  position: fixed;
+  bottom: 5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: rgba(30,30,30,0.92);
+  color: #fff;
+  padding: 0.65rem 1.3rem;
+  border-radius: 50px;
+  font-size: 0.88rem;
+  z-index: 20001;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ===================== Theme Toggle Button ===================== */
+.theme-toggle-btn {
+  position: fixed;
+  bottom: 4.6rem;
+  right: 1.4rem;
+  z-index: 10001;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.09);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.18s, box-shadow 0.18s;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.35);
+  line-height: 1;
+  padding: 0;
+}
+.theme-toggle-btn:hover {
+  transform: scale(1.12);
+  box-shadow: 0 6px 24px rgba(255,255,255,0.15);
+}
+
+/* ===================== Theme Picker Panel ===================== */
+.theme-picker-panel {
+  position: fixed;
+  bottom: 8.5rem;
+  right: 1.4rem;
+  z-index: 10001;
+  background: rgba(10,10,20,0.92);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 18px;
+  padding: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px) scale(0.95);
+  transform-origin: bottom right;
+  transition: opacity 0.2s, transform 0.2s;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.55);
+  min-width: 130px;
+}
+.theme-picker-panel.visible {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateY(0) scale(1);
+}
+.theme-picker-title {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.35);
+  text-align: center;
+  padding: 0.2rem 0.5rem 0.4rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  font-family: "Outfit","Inter",sans-serif;
+  font-size: 0.88rem;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  text-align: left;
+  width: 100%;
+}
+.theme-option:hover {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+.theme-option.active {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.18);
+  color: #fff;
+  font-weight: 700;
+}
+.tpo-emoji { font-size: 1.05rem; line-height: 1; }
+
+/* ===================== Seasonal Particles ===================== */
+.seasonal-particle {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  animation-fill-mode: forwards;
+  animation-timing-function: linear;
+}
+
+/* Cánh hoa đào + Lá thu: rơi xoay */
+@keyframes spLeafFall {
+  0%   { transform: translateY(0)    translateX(0)                       rotate(0deg)   scale(1); }
+  30%  { transform: translateY(28vh) translateX(calc(var(--sp-drift)*.35)) rotate(180deg) scale(0.95); }
+  65%  { transform: translateY(60vh) translateX(calc(var(--sp-drift)*.7))  rotate(360deg) scale(0.88); }
+  100% { transform: translateY(112vh) translateX(var(--sp-drift))          rotate(540deg) scale(0.75); }
+}
+
+/* Tia nắng: rơi thẳng, fade in-out */
+@keyframes spRayFall {
+  0%   { transform: translateY(-30px) translateX(0);                   opacity:0; }
+  12%  { opacity:1; }
+  88%  { opacity:1; }
+  100% { transform: translateY(112vh) translateX(var(--sp-drift));     opacity:0; }
+}
+
+/* Bông tuyết: lưởt ngang rồi rơi */
+@keyframes spSnowFall {
+  0%   { transform: translateY(0)    translateX(0); }
+  25%  { transform: translateY(25vh) translateX(calc(var(--sp-drift)*.55)); }
+  50%  { transform: translateY(50vh) translateX(calc(var(--sp-drift)*.1)); }
+  75%  { transform: translateY(75vh) translateX(calc(var(--sp-drift)*.7)); }
+  100% { transform: translateY(112vh) translateX(var(--sp-drift)); }
+}
 
 .cr-item-day {
   font-size: 0.58rem;

@@ -1,5 +1,53 @@
 // Upload type is always daily
 
+// ===================== Password Gate =====================
+const LOCK_KEY = "myfamily_auth";
+const CORRECT_PASS = "giadinhso1";
+
+function checkPassword() {
+  const input = document.getElementById("lockInput");
+  const errorEl = document.getElementById("lockError");
+  const val = input.value.trim();
+
+  if (val === CORRECT_PASS) {
+    localStorage.setItem(LOCK_KEY, "1");
+    const lockScreen = document.getElementById("lockScreen");
+    lockScreen.style.transition = "opacity 0.4s ease";
+    lockScreen.style.opacity = "0";
+    setTimeout(() => {
+      lockScreen.style.display = "none";
+      document.getElementById("mainContent").style.display = "";
+    }, 400);
+  } else {
+    errorEl.textContent = "Sai mật khẩu rồi! Thử lại nha 😅";
+    const card = document.querySelector(".lock-card");
+    card.classList.remove("lock-shake");
+    void card.offsetWidth; // reflow
+    card.classList.add("lock-shake");
+    input.value = "";
+    input.focus();
+    setTimeout(() => { errorEl.textContent = ""; }, 3000);
+  }
+}
+
+function toggleLockEye() {
+  const input = document.getElementById("lockInput");
+  input.type = input.type === "password" ? "text" : "password";
+}
+
+(function initLockScreen() {
+  if (localStorage.getItem(LOCK_KEY) === "1") {
+    // Đã đăng nhập trước đó
+    document.getElementById("lockScreen").style.display = "none";
+    document.getElementById("mainContent").style.display = "";
+  } else {
+    // Focus vào input
+    window.addEventListener("DOMContentLoaded", () => {
+      setTimeout(() => document.getElementById("lockInput")?.focus(), 100);
+    });
+  }
+})();
+
 // Galaxy Star Generation
 function createStars() {
   const container = document.getElementById("stars-container");
@@ -38,8 +86,9 @@ document.addEventListener("mousemove", (e) => {
     sparkle.style.top = e.pageY + "px";
     sparkle.style.width = "2px";
     sparkle.style.height = "2px";
-    sparkle.style.background = "#ffd700";
-    sparkle.style.boxShadow = "0 0 10px #ffd700";
+    const _sc = window._sparkleColor || "#ffd700";
+    sparkle.style.background = _sc;
+    sparkle.style.boxShadow = `0 0 10px ${_sc}`;
     document.body.appendChild(sparkle);
 
     setTimeout(() => {
@@ -50,6 +99,8 @@ document.addEventListener("mousemove", (e) => {
 
 window.onload = () => {
   createStars();
+  initThemePicker();
+  loadSavedTheme();
   initSlideshow();
   initDailyPhotos();
   initTypewriter();
@@ -57,7 +108,7 @@ window.onload = () => {
 };
 
 // ===================== Typewriter (Tết Theme) =====================
-const typewriterTexts = [
+let typewriterTexts = [
   "🧨 Chúc mừng năm mới gia đình mình! 🧨",
   "🧧 Vạn sự như ý - An khang thịnh vượng 🧧",
   "✨ Kỷ niệm nhà mình mãi mãi bền lâu ✨",
@@ -131,6 +182,26 @@ async function initSlideshow() {
   if (photoFrame) {
     photoFrame.style.cursor = "pointer";
     photoFrame.addEventListener("click", () => openMainModal());
+  }
+
+  // ── Swipe mobile trên slideshow ──
+  const swipeTarget = document.querySelector(".photo-wrapper");
+  if (swipeTarget) {
+    let tsX = 0, tsY = 0;
+    swipeTarget.addEventListener("touchstart", (e) => {
+      tsX = e.touches[0].clientX;
+      tsY = e.touches[0].clientY;
+    }, { passive: true });
+    swipeTarget.addEventListener("touchend", (e) => {
+      const dx = e.changedTouches[0].clientX - tsX;
+      const dy = e.changedTouches[0].clientY - tsY;
+      // Chỉ xử lý swipe ngang, bỏ qua scroll dọc
+      if (Math.abs(dx) < 40 || Math.abs(dy) > Math.abs(dx)) return;
+      stopAutoSlide();
+      if (dx < 0) goTo(currentIndex + 1, img, loading, dotsContainer); // vuốt trái → ảnh tiếp
+      else         goTo(currentIndex - 1, img, loading, dotsContainer); // vuốt phải → ảnh trước
+      startAutoSlide(img, loading, dotsContainer);
+    }, { passive: true });
   }
 
   // Prev / Next buttons — click thì reset timer
@@ -359,6 +430,7 @@ function renderCameraRoll() {
             : `<img src="${p.url}" alt="${p.name}" loading="lazy" />`}
           ${isVideo ? `<div class="video-preview-overlay"><span class="play-icon">▶</span></div>` : ""}
           <div class="cr-item-overlay"><span class="cr-item-day">${p.name}</span></div>
+          <button class="cr-delete-btn" onclick="deletePhoto('${p.id}', ${p._idx}, event)" title="Xóa ảnh">🗑️</button>
         </div>`;
       }).join("");
       return `
@@ -382,6 +454,66 @@ function renderCameraRoll() {
         </div>
       </div>`;
   }).join("");
+}
+
+// ===================== Custom Confirm & Toast =====================
+function showConfirm(msg, onOk) {
+  const overlay = document.getElementById("cconfirmOverlay");
+  const msgEl   = document.getElementById("cconfirmMsg");
+  const okBtn   = document.getElementById("cconfirmOk");
+  const cancelBtn = document.getElementById("cconfirmCancel");
+  msgEl.textContent = msg;
+  overlay.classList.add("visible");
+  const close = () => overlay.classList.remove("visible");
+  okBtn.onclick     = () => { close(); onOk(); };
+  cancelBtn.onclick = () => close();
+  overlay.onclick   = (e) => { if (e.target === overlay) close(); };
+}
+
+let _toastTimer = null;
+function showToast(msg, duration = 2800) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove("show"), duration);
+}
+
+// ===================== Xóa ảnh =====================
+function deletePhoto(fileId, idx, event) {
+  event.stopPropagation();
+  const item = event.currentTarget.closest(".cr-item");
+
+  showConfirm("Xóa ảnh/video này khỏi kỷ niệm nhà mình?", async () => {
+    item.style.opacity = "0.35";
+    item.style.pointerEvents = "none";
+
+    try {
+      const res = await fetch("/api/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileId }),
+      });
+
+      if (res.ok) {
+        dailyPhotos = dailyPhotos.filter(p => p.id !== fileId);
+        item.style.transition = "transform 0.25s, opacity 0.25s";
+        item.style.transform = "scale(0.8)";
+        item.style.opacity = "0";
+        setTimeout(() => renderCameraRoll(), 260);
+        showToast("🗑️ Đã xóa khỏi kỷ niệm nhà mình");
+      } else {
+        item.style.opacity = "";
+        item.style.pointerEvents = "";
+        showToast("⚠️ Xóa thất bại, thử lại nhé!");
+      }
+    } catch (err) {
+      item.style.opacity = "";
+      item.style.pointerEvents = "";
+      showToast("⚠️ Lỗi kết nối, thử lại nhé!");
+      console.error("[deletePhoto]", err);
+    }
+  });
 }
 
 function toggleMonth(key) {
@@ -413,10 +545,275 @@ function toggleMonth(key) {
   }
 }
 
+// ===================== Season Themes =====================
+const SEASON_THEMES = {
+  tet: {
+    label: "Tết", emoji: "🧧",
+    bgColor: "#4b0000",
+    galaxyBg: "radial-gradient(circle at 50% 50%, #7d0000 0%, #300000 100%)",
+    nebula1: "rgba(255,215,0,0.4)", nebula2: "rgba(255,69,0,0.3)",
+    accent: "#ffd700", glassBorder: "rgba(255,215,0,0.2)", sparkleColor: "#ffd700",
+    texts: ["🧨 Chúc mừng năm mới gia đình mình! 🧨", "🧧 Vạn sự như ý - An khang thịnh vượng 🧧", "✨ Kỷ niệm nhà mình mãi mãi bền lâu ✨"],
+  },
+  xuan: {
+    label: "Xuân", emoji: "🌸",
+    bgColor: "#1a3520",
+    galaxyBg: "radial-gradient(circle at 50% 50%, #2e5c32 0%, #0e201a 100%)",
+    nebula1: "rgba(160,255,140,0.3)", nebula2: "rgba(255,155,181,0.35)",
+    accent: "#ff9bb5", glassBorder: "rgba(255,155,181,0.25)", sparkleColor: "#ffb3c8",
+    texts: ["🌸 Mùa xuân tươi mát đến rồi nhà ơi! 🌸", "🌺 Vạn vật đâm chồi, gia đình mình thêm vui 🌺", "🌿 Xuân về mang theo bao điều tốt lành ✨"],
+  },
+  ha: {
+    label: "Hạ", emoji: "🌊",
+    bgColor: "#062840",
+    galaxyBg: "radial-gradient(circle at 50% 50%, #0e4a72 0%, #021830 100%)",
+    nebula1: "rgba(0,212,255,0.35)", nebula2: "rgba(0,120,220,0.3)",
+    accent: "#00d4ff", glassBorder: "rgba(0,212,255,0.2)", sparkleColor: "#7fe8ff",
+    texts: ["🌊 Hè về rực rỡ, cùng nhau tận hưởng thôi! ☀️", "🏖️ Mùa hè đến rồi, lên kế hoạch đi chơi nào! 🌴", "☀️ Nắng hạ ấm áp như tình yêu gia đình mình ✨"],
+  },
+  thu: {
+    label: "Thu", emoji: "🍂",
+    bgColor: "#3a1500",
+    galaxyBg: "radial-gradient(circle at 50% 50%, #7a3200 0%, #1e0a00 100%)",
+    nebula1: "rgba(255,140,0,0.4)", nebula2: "rgba(200,60,0,0.3)",
+    accent: "#ff8c00", glassBorder: "rgba(255,140,0,0.2)", sparkleColor: "#ffa500",
+    texts: ["🍂 Mùa thu se lạnh, ôm nhau cho ấm nha! 🍁", "🌾 Thu về mang theo bao kỷ niệm đẹp 🍂", "🍁 Lá thu rơi nhẹ như tình nhà mình vậy ✨"],
+  },
+  dong: {
+    label: "Đông", emoji: "❄️",
+    bgColor: "#091525",
+    galaxyBg: "radial-gradient(circle at 50% 50%, #142a4a 0%, #040d1a 100%)",
+    nebula1: "rgba(168,216,255,0.3)", nebula2: "rgba(100,160,220,0.25)",
+    accent: "#a8d8ff", glassBorder: "rgba(168,216,255,0.2)", sparkleColor: "#c0e8ff",
+    texts: ["❄️ Đông về rồi, cùng quây quần bên nhau nhé! ❄️", "⛄ Mùa đông ấm áp hơn khi có gia đình bên cạnh 💙", "🌨️ Tuyết rơi nhẹ nhàng như cái ôm của mẹ ❄️"],
+  },
+};
+
+let currentThemeId = "tet";
+
+function applyTheme(id) {
+  const t = SEASON_THEMES[id];
+  if (!t) return;
+  currentThemeId = id;
+  localStorage.setItem("myfamily_theme", id);
+
+  const root = document.documentElement;
+  root.style.setProperty("--bg-color", t.bgColor);
+  root.style.setProperty("--primary-glow", t.nebula1);
+  root.style.setProperty("--secondary-glow", t.nebula2);
+  root.style.setProperty("--accent-color", t.accent);
+  root.style.setProperty("--glass-border", t.glassBorder);
+
+  const galaxy = document.querySelector(".galaxy-container");
+  if (galaxy) galaxy.style.background = t.galaxyBg;
+
+  const nebula = document.querySelector(".nebula");
+  if (nebula) nebula.style.background =
+    `radial-gradient(circle at 20% 30%, ${t.nebula1} 0%, transparent 40%),
+     radial-gradient(circle at 80% 70%, ${t.nebula2} 0%, transparent 40%)`;
+
+  window._sparkleColor = t.sparkleColor;
+
+  // Reset typewriter
+  twIndex = 0; twChar = 0; twDir = 1;
+  typewriterTexts.length = 0;
+  t.texts.forEach(tx => typewriterTexts.push(tx));
+
+  spawnSeasonalParticles(id);
+
+  document.querySelectorAll(".theme-option").forEach(el => {
+    el.classList.toggle("active", el.dataset.themeId === id);
+  });
+  const btn = document.getElementById("themeToggleBtn");
+  if (btn) btn.textContent = t.emoji;
+}
+
+function initThemePicker() {
+  const panel = document.getElementById("themePickerPanel");
+  if (!panel) return;
+  panel.innerHTML =
+    `<div class="theme-picker-title">Chọn mùa</div>` +
+    Object.entries(SEASON_THEMES).map(([id, t]) => `
+      <button class="theme-option" data-theme-id="${id}"
+              onclick="applyTheme('${id}');toggleThemePicker();">
+        <span class="tpo-emoji">${t.emoji}</span>
+        <span class="tpo-label">${t.label}</span>
+      </button>`).join("");
+}
+
+function toggleThemePicker() {
+  document.getElementById("themePickerPanel")?.classList.toggle("visible");
+}
+
+document.addEventListener("click", (e) => {
+  if (!e.target.closest("#themePickerPanel") && !e.target.closest("#themeToggleBtn")) {
+    document.getElementById("themePickerPanel")?.classList.remove("visible");
+  }
+});
+
+function loadSavedTheme() {
+  const saved = localStorage.getItem("myfamily_theme") || "tet";
+  applyTheme(saved);
+}
+
+// ===================== Seasonal Particles =====================
+let _seasonalInterval = null;
+
+function clearSeasonalParticles() {
+  if (_seasonalInterval) { clearInterval(_seasonalInterval); _seasonalInterval = null; }
+  const c = document.getElementById("seasonal-container");
+  if (c) c.innerHTML = "";
+}
+
+function spawnSeasonalParticles(themeId) {
+  clearSeasonalParticles();
+  const container = document.getElementById("seasonal-container");
+  if (!container || themeId === "tet") return; // Tết dùng pháo hoa
+
+  // ---- Builders theo từng mùa ----
+  function makePetal() {
+    // Hoa đào: cánh hoa hồng oval
+    const el = document.createElement("div");
+    const size = 8 + Math.random() * 9;
+    const pink = `hsl(${340 + Math.random()*30},${80+Math.random()*15}%,${70+Math.random()*15}%)`;
+    el.style.cssText = [
+      `width:${size}px`,
+      `height:${size * 1.45}px`,
+      `background:radial-gradient(ellipse at 38% 35%,#fff 0%,${pink} 60%)`,
+      `border-radius:50% 50% 50% 0/60% 60% 40% 40%`,
+      `box-shadow:0 0 4px rgba(255,150,180,0.45)`,
+      `opacity:${0.55 + Math.random() * 0.4}`,
+      `animation-name:spLeafFall`,
+    ].join(";");
+    return el;
+  }
+
+  function makeRay() {
+    // Tia nắng: thanh vàng mỏ dài rơi chéo
+    const el = document.createElement("div");
+    const h = 60 + Math.random() * 100;
+    const w = 1 + Math.random() * 1.5;
+    const ang = -15 + Math.random() * 20; // chéo nhẹ
+    el.style.cssText = [
+      `width:${w}px`,
+      `height:${h}px`,
+      `background:linear-gradient(to bottom,transparent,rgba(255,230,60,0.75) 40%,rgba(255,200,0,0.6) 60%,transparent)`,
+      `border-radius:2px`,
+      `transform:rotate(${ang}deg)`,
+      `opacity:${0.25 + Math.random() * 0.3}`,
+      `animation-name:spRayFall`,
+    ].join(";");
+    return el;
+  }
+
+  function makeLeaf() {
+    // Lá thu: hình lá vàng cam
+    const el = document.createElement("div");
+    const colors = ["#f5c518","#e8a000","#d45500","#c8601a","#e8c000","#f09000"];
+    const c = colors[Math.floor(Math.random() * colors.length)];
+    const w = 11 + Math.random() * 12;
+    const h = w * (0.6 + Math.random() * 0.3);
+    el.style.cssText = [
+      `width:${w}px`,
+      `height:${h}px`,
+      `background:radial-gradient(ellipse at 40% 40%,${c}ee,${c}88)`,
+      `border-radius:0 50% 0 50%`,
+      `box-shadow:0 0 3px rgba(200,100,0,0.3)`,
+      `opacity:${0.65 + Math.random() * 0.35}`,
+      `animation-name:spLeafFall`,
+    ].join(";");
+    return el;
+  }
+
+  function makeSnow() {
+    // Bông tuyết: ký tự hoặc chấm trắng
+    const el = document.createElement("div");
+    if (Math.random() > 0.45) {
+      const size = 4 + Math.random() * 5;
+      el.style.cssText = [
+        `width:${size}px`,
+        `height:${size}px`,
+        `background:rgba(255,255,255,${0.6 + Math.random() * 0.4})`,
+        `border-radius:50%`,
+        `box-shadow:0 0 ${size * 2.5}px rgba(190,220,255,0.9)`,
+        `animation-name:spSnowFall`,
+      ].join(";");
+    } else {
+      const fs = 12 + Math.random() * 14;
+      el.style.cssText = [
+        `font-size:${fs}px`,
+        `color:rgba(210,235,255,${0.5 + Math.random() * 0.45})`,
+        `text-shadow:0 0 8px rgba(170,210,255,0.8)`,
+        `line-height:1`,
+        `animation-name:spSnowFall`,
+      ].join(";");
+      el.textContent = ["\u2744","\u2745","\u2746"][Math.floor(Math.random() * 3)];
+    }
+    return el;
+  }
+
+  const cfgs = {
+    xuan: { fn: makePetal, rate: 650,  dur: [6, 10] },
+    ha:   { fn: makeRay,   rate: 360,  dur: [1.4, 2.8] },
+    thu:  { fn: makeLeaf,  rate: 580,  dur: [5, 9]  },
+    dong: { fn: makeSnow,  rate: 420,  dur: [7, 14] },
+  };
+
+  const cfg = cfgs[themeId];
+  if (!cfg) return;
+
+  function spawn() {
+    const el = cfg.fn();
+    el.style.position = "absolute";
+    el.style.top = "-30px";
+    el.style.left = (Math.random() * 102) + "vw";
+    const drift = (Math.random() - 0.5) * (themeId === "dong" ? 100 : 180);
+    el.style.setProperty("--sp-drift", drift + "px");
+    const dur = cfg.dur[0] + Math.random() * (cfg.dur[1] - cfg.dur[0]);
+    el.style.animationDuration = dur + "s";
+    el.style.animationFillMode = "forwards";
+    el.style.animationTimingFunction = themeId === "ha" ? "ease-in" : "linear";
+    el.style.pointerEvents = "none";
+    container.appendChild(el);
+    setTimeout(() => el.remove(), (dur + 0.5) * 1000);
+  }
+
+  // Spawn vài cái ngay khi vào
+  for (let i = 0; i < 5; i++) setTimeout(spawn, i * 120);
+  _seasonalInterval = setInterval(spawn, cfg.rate);
+}
+
 // ===================== Fireworks (Tết) =====================
+let fireworksEnabled = localStorage.getItem("fw_enabled") !== "0";
+let fireworkInterval = null;
+
+function updateFwBtn() {
+  const btn = document.getElementById("fwToggle");
+  if (!btn) return;
+  btn.textContent = fireworksEnabled ? "🎆" : "🎇";
+  btn.classList.toggle("fw-off", !fireworksEnabled);
+  btn.title = fireworksEnabled ? "Tắt pháo hoa" : "Bật pháo hoa";
+}
+
+function toggleFireworks() {
+  fireworksEnabled = !fireworksEnabled;
+  localStorage.setItem("fw_enabled", fireworksEnabled ? "1" : "0");
+  updateFwBtn();
+  if (!fireworksEnabled && fireworkInterval) {
+    clearInterval(fireworkInterval);
+    fireworkInterval = null;
+  } else if (fireworksEnabled && !fireworkInterval) {
+    fireworkInterval = setInterval(() => {
+      if (fireworksEnabled && Math.random() > 0.3) _createFirework();
+    }, 1500);
+  }
+}
+
 function initFireworks() {
   const container = document.getElementById("fireworks-container");
   if (!container) return;
+
+  updateFwBtn();
 
   // Sound effects - Dùng file nội bộ của bạn
   const fireworkSound = new Audio("/fire.mp3");
@@ -479,13 +876,19 @@ function initFireworks() {
     }
   }
 
-  // Nổ pháo mỗi 2-3 giây
-  setInterval(() => {
-    if (Math.random() > 0.3) createFirework();
-  }, 1500);
+  // Expose createFirework ra ngoài để toggleFireworks dùng
+  window._createFirework = createFirework;
+
+  // Nổ pháo mỗi 1.5 giây nếu đang bật
+  if (fireworksEnabled) {
+    fireworkInterval = setInterval(() => {
+      if (fireworksEnabled && Math.random() > 0.3) createFirework();
+    }, 1500);
+  }
 
   // Nổ khi click
   document.addEventListener("click", (e) => {
+    if (!fireworksEnabled) return;
     // Không nổ khi click vào nút hoặc input
     if (e.target.closest("button") || e.target.closest("input") || e.target.closest(".cr-item")) return;
     
