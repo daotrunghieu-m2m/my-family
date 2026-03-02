@@ -707,6 +707,32 @@ h1 {
 
 .cr-item:hover .cr-item-overlay { opacity: 1; }
 
+/* Syncing overlay khi ảnh chưa được Drive xác nhận */
+.cr-item.syncing {
+  opacity: 0.7;
+}
+.cr-syncing-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  border-radius: inherit;
+}
+.cr-syncing-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid rgba(255,255,255,0.25);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spinnerRot 0.8s linear infinite;
+}
+@keyframes spinnerRot {
+  to { transform: rotate(360deg); }
+}
+
 /* Nút xóa ảnh */
 .cr-delete-btn {
   position: absolute;

@@ -424,11 +424,12 @@ function renderCameraRoll() {
       const thumbsHTML = dayPhotos.map(p => {
         const isVideo = p.mimeType && p.mimeType.startsWith("video/");
         return `
-        <div class="cr-item ${isVideo ? 'video' : ''}" onclick="openDailyModal(dailyPhotos[${p._idx}])">
+        <div class="cr-item ${isVideo ? 'video' : ''} ${p._syncing ? 'syncing' : ''}" onclick="openDailyModal(dailyPhotos[${p._idx}])">
           ${isVideo 
             ? `<img src="${p.thumbnail || "https://img.icons8.com/ios-filled/100/ffffff/video-message.png"}" alt="${p.name}" loading="lazy" style="${p.thumbnail ? '' : 'object-fit:center;background:#1a1a1a;padding:20px;'}" />` 
             : `<img src="${p.url}" alt="${p.name}" loading="lazy" />`}
           ${isVideo ? `<div class="video-preview-overlay"><span class="play-icon">▶</span></div>` : ""}
+          ${p._syncing ? `<div class="cr-syncing-overlay"><div class="cr-syncing-spinner"></div></div>` : ""}
           <div class="cr-item-overlay"><span class="cr-item-day">${p.name}</span></div>
           <button class="cr-delete-btn" onclick="deletePhoto('${p.id}', ${p._idx}, event)" title="Xóa ảnh">🗑️</button>
         </div>`;
@@ -1124,23 +1125,75 @@ async function uploadPhoto() {
       const result = await res.json();
 
       if (res.ok) {
-        showUploadStatus("✅ Đã lưu kỷ niệm của nhà! 📸", "success");
-
-        // Reset form
+        // Reset form ngay
         fileInput.value = "";
         nameInput.value = "";
         document.getElementById("previewContent").style.display = "none";
         document.getElementById("dropContent").style.display = "flex";
 
-        // Thêm ảnh mới vào camera roll
+        // Thêm placeholder ngay vào camera roll (optimistic UI)
         const newPhoto = {
           id: result.id,
-          name: name,
+          name,
           url: `/api/image?id=${result.id}`,
+          mimeType,
           time: new Date().toISOString(),
+          _syncing: true,
         };
         dailyPhotos.unshift(newPhoto);
         renderCameraRoll();
+        showUploadStatus("⏳ Ảnh đang được Drive xử lý...", "success");
+
+        // Poll cho đến khi Drive xác nhận file xuất hiện
+        let _pollAttempt = 0;
+        const POLL_MAX = 6;
+        const POLL_INTERVAL = 3000;
+        const pollDrive = setInterval(async () => {
+          _pollAttempt++;
+          try {
+            const [dailyData, photosData] = await Promise.all([
+              fetch("/api/daily").then(r => r.ok ? r.json() : null).catch(() => null),
+              fetch("/api/photos").then(r => r.ok ? r.json() : null).catch(() => null),
+            ]);
+
+            const confirmed = dailyData?.photos?.some(p => p.id === result.id);
+
+            if (confirmed || _pollAttempt >= POLL_MAX) {
+              clearInterval(pollDrive);
+
+              if (dailyData?.photos) {
+                dailyPhotos = dailyData.photos;
+                renderCameraRoll();
+              }
+              if (photosData?.photos?.length > 0) {
+                photos = photosData.photos;
+                const _img = document.getElementById("mainPhoto");
+                const _load = document.getElementById("photoLoading");
+                const _dots = document.getElementById("slideDots");
+                const _prev = document.getElementById("slidePrev");
+                const _next = document.getElementById("slideNext");
+                renderDots(_dots);
+                currentIndex = 0;
+                showPhoto(currentIndex, _img, _load, _dots);
+                if (photos.length > 1) {
+                  _prev.style.display = "";
+                  _next.style.display = "";
+                  _dots.style.display = "";
+                }
+              }
+
+              if (confirmed) {
+                showUploadStatus("✅ Đồng bộ xong! 📸", "success");
+                showToast("📸 Ảnh đã xuất hiện trong kỷ niệm nhà mình!");
+              } else {
+                showUploadStatus("✅ Đã lưu! Ảnh sẽ hiện sau ít phút.", "success");
+              }
+              setTimeout(() => showUploadStatus("", ""), 3000);
+            } else {
+              showUploadStatus(`⏳ Đang đồng bộ với Drive... (lần ${_pollAttempt})`, "success");
+            }
+          } catch { /* bỏ qua lỗi mạng tạm thời */ }
+        }, POLL_INTERVAL);
       } else {
         // Hiện đúng lỗi từ server để dễ debug
         const errMsg = result.error || "Upload thất bại";
