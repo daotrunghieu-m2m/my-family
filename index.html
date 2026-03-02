@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nhà mình</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;700&family=Inter:wght@300;400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="galaxy-container">
+      <div class="nebula"></div>
+      <div class="stars" id="stars-container"></div>
+    </div>
+
+    <!-- Fireworks Container -->
+    <div id="fireworks-container"></div>
+
+    <main class="main-container">
+      <h1>Gia đình số nhất mốt</h1>
+
+      <!-- Ảnh gia đình lớn - Slideshow (to + căn giữa) -->
+      <div class="photo-wrapper">
+        <div class="photo-frame">
+          <img src="family.jpg" alt="Ảnh gia đình 🏠" class="photo" id="mainPhoto" />
+          <div class="photo-loading" id="photoLoading">
+            <div class="spinner"></div>
+          </div>
+        </div>
+
+        <div class="caption-row">
+          <button
+            class="slide-btn slide-prev"
+            id="slidePrev"
+            aria-label="Ảnh trước"
+          >
+            &#8249;
+          </button>
+          
+          <div class="photo-caption" id="photoCaption">🏠 Gia đình mình đây 🏠</div>
+          
+          <button
+            class="slide-btn slide-next"
+            id="slideNext"
+            aria-label="Ảnh tiếp"
+          >
+            &#8250;
+          </button>
+        </div>
+
+        <div class="slide-dots" id="slideDots"></div>
+      </div>
+
+      <p class="subtitle" id="typewriter"></p>
+
+      <!-- Daily Upload Panel (always daily) -->
+      <div class="upload-panel" id="uploadPanel">
+        <button
+          class="upload-toggle"
+          id="uploadToggle"
+          onclick="toggleUpload()"
+        >
+          <span class="upload-toggle-icon">📸</span>
+          <span>Thêm ảnh/video</span>
+          <span class="upload-chevron" id="uploadChevron">▾</span>
+        </button>
+
+        <div class="upload-body" id="uploadBody">
+          <div class="upload-content-row">
+            <!-- Drop zone -->
+            <div
+              class="drop-zone"
+              id="dropZone"
+              onclick="document.getElementById('fileInput').click()"
+            >
+              <input
+                type="file"
+                id="fileInput"
+                accept="image/*,video/*,.heic,.heif"
+                hidden
+              />
+              <div class="drop-content" id="dropContent">
+                <p class="drop-text">Chọn ảnh hoặc video</p>
+              </div>
+              <div class="preview-content" id="previewContent">
+                <img id="previewImg" src="" alt="preview" />
+              </div>
+            </div>
+
+            <div class="upload-inputs">
+              <!-- Tên caption -->
+              <input
+                type="text"
+                id="photoName"
+                class="name-input"
+                placeholder="📝 Ghi chú kỷ niệm..."
+                maxlength="80"
+              />
+
+              <!-- Nút upload -->
+              <button class="btn-upload" id="uploadBtn" onclick="uploadPhoto()">
+                <span id="uploadBtnText">📸 Lưu ảnh</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Trạng thái -->
+          <div class="upload-status" id="uploadStatus"></div>
+          <p style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-align: center; margin-top: 4px; line-height: 1.4;">
+            ✨ Lưu ý: Video dung lượng lớn sẽ mất một chút thời gian để xử lý và hiển thị.
+          </p>
+        </div>
+      </div>
+
+      <!-- Camera Roll Section -->
+      <div class="camera-roll" id="cameraRoll">
+        <h3 class="camera-roll-title">📷 Kỷ niệm của nhà</h3>
+        <div class="camera-roll-body" id="cameraRollBody">
+          <div class="daily-placeholder">Đang tải kỷ niệm của gia đình...</div>
+        </div>
+      </div>
+    </main>
+
+
+
+    <!-- Daily Photo Modal -->
+    <div class="daily-modal" id="dailyModal" onclick="closeDailyModal(event)">
+      <div class="daily-modal-inner">
+        <button class="daily-modal-close" onclick="closeDailyModal()" aria-label="Đóng">✕</button>
+        <img class="daily-modal-img" id="dailyModalImg" src="" alt="" />
+        <video class="daily-modal-video" id="dailyModalVideo" controls playsinline style="display: none; width: 100%; max-height: 70vh; border-radius: 18px;"></video>
+        <div class="daily-modal-title" id="dailyModalTitle"></div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

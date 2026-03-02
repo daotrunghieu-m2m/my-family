@@ -1,0 +1,13 @@
+# Environment variables - KHÔNG commit lên git!
+.env
+.env.local
+.env.production
+
+# Dependencies
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+.vercel
+.env*.local
